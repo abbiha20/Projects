@@ -1,0 +1,126 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class AddInitialEntity1729680630151 implements MigrationInterface {
+    name = 'AddInitialEntity1729680630151'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE \`notification\` (\`id\` varchar(36) NOT NULL, \`businessId\` varchar(255) NULL, \`desktopNewVoicemail\` tinyint NOT NULL DEFAULT 0, \`emailNewVoicemail\` tinyint NOT NULL DEFAULT 0, \`desktopNewConversation\` tinyint NOT NULL DEFAULT 0, \`emailNewConversation\` tinyint NOT NULL DEFAULT 0, \`desktopIncomingMessage\` tinyint NOT NULL DEFAULT 0, \`emailIncomingMessage\` tinyint NOT NULL DEFAULT 0, \`desktopNewWebchatQuery\` tinyint NOT NULL DEFAULT 0, \`emailNewWebchatQuery\` tinyint NOT NULL DEFAULT 0, \`desktopMissedCall\` tinyint NOT NULL DEFAULT 0, \`emailMissedCall\` tinyint NOT NULL DEFAULT 0, \`desktopNewReview\` tinyint NOT NULL DEFAULT 0, \`emailNewReview\` tinyint NOT NULL DEFAULT 0, \`userId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`invitation\` (\`id\` varchar(36) NOT NULL, \`email\` varchar(255) NOT NULL, \`isVerified\` tinyint NOT NULL DEFAULT 0, \`invitationToken\` varchar(255) NOT NULL, \`expiresAt\` datetime NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`invitedById\` varchar(36) NULL, UNIQUE INDEX \`IDX_bcb0a0d2333443083582a05cdd\` (\`email\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`custom_property_definition\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(255) NOT NULL, \`type\` enum ('Text', 'Number', 'Date', 'Boolean', 'Dropdown') NOT NULL DEFAULT 'Text', \`options\` text NULL, \`deletedAt\` datetime(6) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`contact_custom_property\` (\`id\` varchar(36) NOT NULL, \`businessId\` varchar(255) NULL, \`value\` text NULL, \`contactId\` varchar(36) NULL, \`propertyDefinitionId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`message\` (\`id\` varchar(36) NOT NULL, \`content\` text NOT NULL, \`isScheduled\` tinyint NOT NULL DEFAULT 0, \`scheduleAt\` datetime NULL, \`isRecurring\` tinyint NOT NULL DEFAULT 0, \`recurrencePattern\` varchar(255) NULL, \`fileURLs\` text NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`conversationId\` varchar(36) NULL, \`senderId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`call\` (\`id\` varchar(36) NOT NULL, \`businessId\` varchar(255) NULL, \`minutesTalked\` float NOT NULL DEFAULT '0', \`isCanceled\` tinyint NOT NULL DEFAULT 0, \`isReceived\` tinyint NOT NULL DEFAULT 0, \`callTime\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`conversationId\` varchar(36) NULL, \`contactId\` varchar(36) NULL, \`callById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`sms_reply\` (\`id\` varchar(36) NOT NULL, \`sid\` varchar(255) NOT NULL, \`body\` text NOT NULL, \`from\` varchar(255) NOT NULL, \`to\` varchar(255) NOT NULL, \`dateCreated\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`direction\` varchar(255) NOT NULL, \`fileURLs\` text NULL, \`mediaType\` varchar(255) NULL, \`mediaContentType\` varchar(255) NULL, \`mediaSize\` int NULL, \`conversationId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`conversation\` (\`id\` varchar(36) NOT NULL, \`assign\` tinyint NOT NULL DEFAULT 0, \`businessId\` varchar(255) NULL, \`fileURLs\` text NULL, \`senderLocation\` varchar(255) NULL, \`notes\` text NULL, \`teamAutoAssign\` tinyint NOT NULL DEFAULT 0, \`memberAutoAssign\` tinyint NOT NULL DEFAULT 0, \`customSignature\` tinyint NOT NULL DEFAULT 0, \`signatureText\` varchar(255) NULL, \`addFlag\` tinyint NOT NULL DEFAULT 0, \`read\` tinyint NOT NULL DEFAULT 0, \`isOpen\` tinyint NOT NULL DEFAULT 1, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`contactId\` varchar(36) NULL, \`assignedToId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`task\` (\`id\` varchar(36) NOT NULL, \`title\` varchar(255) NOT NULL, \`description\` text NOT NULL, \`businessId\` varchar(255) NULL, \`fileUrl\` varchar(255) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, \`assignedToId\` varchar(36) NULL, \`contactId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`contact\` (\`id\` varchar(36) NOT NULL, \`firstName\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`lastName\` varchar(255) NOT NULL, \`phone\` varchar(255) NOT NULL, \`email\` varchar(255) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`originalSource\` varchar(255) NOT NULL, \`block\` tinyint NOT NULL DEFAULT 0, \`optout\` tinyint NOT NULL DEFAULT 0, \`deletedAt\` datetime(6) NULL, \`createdById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`team\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`description\` varchar(255) NULL, \`deletedAt\` datetime(6) NULL, \`createdById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`team_member\` (\`id\` varchar(36) NOT NULL, \`role\` varchar(255) NOT NULL, \`deletedAt\` datetime(6) NULL, \`userId\` varchar(36) NULL, \`teamId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`role\` (\`id\` varchar(36) NOT NULL, \`type\` enum ('owner', 'manager', 'member') NOT NULL DEFAULT 'member', PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`permission\` (\`id\` varchar(36) NOT NULL, \`businessId\` varchar(255) NULL, \`conversationAssignedToOthers\` tinyint NOT NULL DEFAULT 0, \`unassignedConversations\` tinyint NOT NULL DEFAULT 0, \`updateRolePermissions\` tinyint NOT NULL DEFAULT 0, \`accessMessageFeed\` tinyint NOT NULL DEFAULT 0, \`accessContacts\` tinyint NOT NULL DEFAULT 0, \`accessManualCampaigns\` tinyint NOT NULL DEFAULT 0, \`accessAutomatedCampaigns\` tinyint NOT NULL DEFAULT 0, \`editDeleteAndCreateTemplates\` tinyint NOT NULL DEFAULT 0, \`editDeleteAndCreateContactProperties\` tinyint NOT NULL DEFAULT 0, \`userId\` varchar(36) NULL, \`roleId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`automated_campaign\` (\`id\` varchar(36) NOT NULL, \`assignTo\` text NULL, \`name\` varchar(255) NOT NULL, \`triggerEvent\` varchar(255) NOT NULL, \`triggerConditions\` text NULL, \`phoneNumbers\` text NULL, \`createdById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`campaign_message\` (\`id\` varchar(36) NOT NULL, \`message\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`templateId\` varchar(255) NULL, \`formRequestId\` varchar(255) NULL, \`assignedReplies\` text NULL, \`autoTranslate\` tinyint NOT NULL DEFAULT 0, \`confirmationText\` varchar(255) NULL, \`optOutMessage\` varchar(255) NULL, \`shortenedUrls\` text NULL, \`simpleCampaignId\` varchar(36) NULL, \`automatedCampaignId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`simple_campaign\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`startType\` varchar(255) NOT NULL, \`scheduledDate\` datetime NULL, \`phoneNumbers\` text NULL, \`deletedAt\` datetime(6) NULL, \`createdById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`user\` (\`id\` varchar(36) NOT NULL, \`email\` varchar(255) NOT NULL, \`name\` varchar(255) NOT NULL, \`password\` varchar(255) NOT NULL, \`location\` varchar(255) NOT NULL, \`isVerified\` tinyint NOT NULL, \`phoneNumber\` varchar(255) NULL, \`role\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`username\` varchar(255) NOT NULL, \`deletedAt\` datetime(6) NULL, UNIQUE INDEX \`IDX_e12875dfb3b1d92d7d7c5377e2\` (\`email\`), UNIQUE INDEX \`IDX_78a916df40e02a9deb1c4b75ed\` (\`username\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`short_url\` (\`id\` varchar(36) NOT NULL, \`shortCode\` varchar(255) NOT NULL, \`originalUrl\` varchar(255) NOT NULL, \`clicks\` int NOT NULL DEFAULT '0', \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`IDX_91af1a4e5e9738afc28db3f486\` (\`shortCode\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`notification_save\` (\`id\` varchar(36) NOT NULL, \`title\` varchar(255) NOT NULL, \`body\` text NOT NULL, \`data\` varchar(255) NULL, \`businessId\` varchar(255) NULL, \`status\` varchar(255) NOT NULL, \`fcmToken\` varchar(255) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`userId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`message_log\` (\`id\` varchar(36) NOT NULL, \`totalConversations\` int NOT NULL DEFAULT '0', \`businessId\` varchar(255) NULL, \`openCount\` int NOT NULL DEFAULT '0', \`closeCount\` int NOT NULL DEFAULT '0', \`unassignedCount\` int NOT NULL DEFAULT '0', \`assignedCount\` int NOT NULL DEFAULT '0', \`date\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`group\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`memberIds\` text NOT NULL, \`messageIds\` text NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`list\` (\`id\` varchar(36) NOT NULL, \`title\` varchar(255) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`folder\` (\`id\` varchar(36) NOT NULL, \`folderName\` varchar(255) NOT NULL, \`businessId\` varchar(255) NULL, \`conversationIds\` text NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deletedAt\` datetime(6) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`call_log\` (\`id\` varchar(36) NOT NULL, \`businessId\` varchar(255) NULL, \`totalCalls\` int NOT NULL DEFAULT '0', \`canceledCalls\` int NOT NULL DEFAULT '0', \`receivedCalls\` int NOT NULL DEFAULT '0', \`totalMinutes\` float NOT NULL DEFAULT '0', \`date\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`business\` (\`id\` varchar(36) NOT NULL, \`businessName\` varchar(255) NOT NULL, \`adminId\` varchar(255) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`list_contacts_contact\` (\`listId\` varchar(36) NOT NULL, \`contactId\` varchar(36) NOT NULL, INDEX \`IDX_e03327665f584bf0327f41d81d\` (\`listId\`), INDEX \`IDX_77e0650e92bd7eb4fece84f8c3\` (\`contactId\`), PRIMARY KEY (\`listId\`, \`contactId\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`notification\` ADD CONSTRAINT \`FK_1ced25315eb974b73391fb1c81b\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`invitation\` ADD CONSTRAINT \`FK_603764233ba5c97400836665523\` FOREIGN KEY (\`invitedById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`contact_custom_property\` ADD CONSTRAINT \`FK_a95fa7cfe418a7d94b3343acce7\` FOREIGN KEY (\`contactId\`) REFERENCES \`contact\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`contact_custom_property\` ADD CONSTRAINT \`FK_22b727b2dceec555b39464d5e00\` FOREIGN KEY (\`propertyDefinitionId\`) REFERENCES \`custom_property_definition\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`message\` ADD CONSTRAINT \`FK_7cf4a4df1f2627f72bf6231635f\` FOREIGN KEY (\`conversationId\`) REFERENCES \`conversation\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`message\` ADD CONSTRAINT \`FK_bc096b4e18b1f9508197cd98066\` FOREIGN KEY (\`senderId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`call\` ADD CONSTRAINT \`FK_bdd6b155a101cb4ca575322c2ac\` FOREIGN KEY (\`conversationId\`) REFERENCES \`conversation\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`call\` ADD CONSTRAINT \`FK_a36ee2ea73ed5019bc95a3a0643\` FOREIGN KEY (\`contactId\`) REFERENCES \`contact\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`call\` ADD CONSTRAINT \`FK_fb4c2a67827e8077162d3976d43\` FOREIGN KEY (\`callById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`sms_reply\` ADD CONSTRAINT \`FK_91efdb8758fea66f91a2dddd4bb\` FOREIGN KEY (\`conversationId\`) REFERENCES \`conversation\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`conversation\` ADD CONSTRAINT \`FK_a3269b16a7b38a1262358de613b\` FOREIGN KEY (\`contactId\`) REFERENCES \`contact\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`conversation\` ADD CONSTRAINT \`FK_4d478aa331e7f82a3ed80b80d78\` FOREIGN KEY (\`assignedToId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`task\` ADD CONSTRAINT \`FK_fd5f652e2fcdc4a5ab30aaff7a7\` FOREIGN KEY (\`assignedToId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`task\` ADD CONSTRAINT \`FK_08f6040ca6e3226c1da9887217c\` FOREIGN KEY (\`contactId\`) REFERENCES \`contact\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`contact\` ADD CONSTRAINT \`FK_0614d78a309722da5dc69b27986\` FOREIGN KEY (\`createdById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`team\` ADD CONSTRAINT \`FK_3a93fbdeba4e1e9e47fec6bada9\` FOREIGN KEY (\`createdById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`team_member\` ADD CONSTRAINT \`FK_d2be3e8fc9ab0f69673721c7fc3\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`team_member\` ADD CONSTRAINT \`FK_74da8f612921485e1005dc8e225\` FOREIGN KEY (\`teamId\`) REFERENCES \`team\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`permission\` ADD CONSTRAINT \`FK_c60570051d297d8269fcdd9bc47\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`permission\` ADD CONSTRAINT \`FK_cdb4db95384a1cf7a837c4c683e\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`automated_campaign\` ADD CONSTRAINT \`FK_34e4dbdd16f28e3a8327aaa83ac\` FOREIGN KEY (\`createdById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`campaign_message\` ADD CONSTRAINT \`FK_b00e1841b9a09c60dcfa6922dac\` FOREIGN KEY (\`simpleCampaignId\`) REFERENCES \`simple_campaign\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`campaign_message\` ADD CONSTRAINT \`FK_8fffb990b834c5f42e968537273\` FOREIGN KEY (\`automatedCampaignId\`) REFERENCES \`automated_campaign\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`simple_campaign\` ADD CONSTRAINT \`FK_e8279cfd95994c0b5dbc6c8361f\` FOREIGN KEY (\`createdById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`notification_save\` ADD CONSTRAINT \`FK_b01a16724e7f93b486be4199b4c\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`list_contacts_contact\` ADD CONSTRAINT \`FK_e03327665f584bf0327f41d81d6\` FOREIGN KEY (\`listId\`) REFERENCES \`list\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE \`list_contacts_contact\` ADD CONSTRAINT \`FK_77e0650e92bd7eb4fece84f8c33\` FOREIGN KEY (\`contactId\`) REFERENCES \`contact\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`list_contacts_contact\` DROP FOREIGN KEY \`FK_77e0650e92bd7eb4fece84f8c33\``);
+        await queryRunner.query(`ALTER TABLE \`list_contacts_contact\` DROP FOREIGN KEY \`FK_e03327665f584bf0327f41d81d6\``);
+        await queryRunner.query(`ALTER TABLE \`notification_save\` DROP FOREIGN KEY \`FK_b01a16724e7f93b486be4199b4c\``);
+        await queryRunner.query(`ALTER TABLE \`simple_campaign\` DROP FOREIGN KEY \`FK_e8279cfd95994c0b5dbc6c8361f\``);
+        await queryRunner.query(`ALTER TABLE \`campaign_message\` DROP FOREIGN KEY \`FK_8fffb990b834c5f42e968537273\``);
+        await queryRunner.query(`ALTER TABLE \`campaign_message\` DROP FOREIGN KEY \`FK_b00e1841b9a09c60dcfa6922dac\``);
+        await queryRunner.query(`ALTER TABLE \`automated_campaign\` DROP FOREIGN KEY \`FK_34e4dbdd16f28e3a8327aaa83ac\``);
+        await queryRunner.query(`ALTER TABLE \`permission\` DROP FOREIGN KEY \`FK_cdb4db95384a1cf7a837c4c683e\``);
+        await queryRunner.query(`ALTER TABLE \`permission\` DROP FOREIGN KEY \`FK_c60570051d297d8269fcdd9bc47\``);
+        await queryRunner.query(`ALTER TABLE \`team_member\` DROP FOREIGN KEY \`FK_74da8f612921485e1005dc8e225\``);
+        await queryRunner.query(`ALTER TABLE \`team_member\` DROP FOREIGN KEY \`FK_d2be3e8fc9ab0f69673721c7fc3\``);
+        await queryRunner.query(`ALTER TABLE \`team\` DROP FOREIGN KEY \`FK_3a93fbdeba4e1e9e47fec6bada9\``);
+        await queryRunner.query(`ALTER TABLE \`contact\` DROP FOREIGN KEY \`FK_0614d78a309722da5dc69b27986\``);
+        await queryRunner.query(`ALTER TABLE \`task\` DROP FOREIGN KEY \`FK_08f6040ca6e3226c1da9887217c\``);
+        await queryRunner.query(`ALTER TABLE \`task\` DROP FOREIGN KEY \`FK_fd5f652e2fcdc4a5ab30aaff7a7\``);
+        await queryRunner.query(`ALTER TABLE \`conversation\` DROP FOREIGN KEY \`FK_4d478aa331e7f82a3ed80b80d78\``);
+        await queryRunner.query(`ALTER TABLE \`conversation\` DROP FOREIGN KEY \`FK_a3269b16a7b38a1262358de613b\``);
+        await queryRunner.query(`ALTER TABLE \`sms_reply\` DROP FOREIGN KEY \`FK_91efdb8758fea66f91a2dddd4bb\``);
+        await queryRunner.query(`ALTER TABLE \`call\` DROP FOREIGN KEY \`FK_fb4c2a67827e8077162d3976d43\``);
+        await queryRunner.query(`ALTER TABLE \`call\` DROP FOREIGN KEY \`FK_a36ee2ea73ed5019bc95a3a0643\``);
+        await queryRunner.query(`ALTER TABLE \`call\` DROP FOREIGN KEY \`FK_bdd6b155a101cb4ca575322c2ac\``);
+        await queryRunner.query(`ALTER TABLE \`message\` DROP FOREIGN KEY \`FK_bc096b4e18b1f9508197cd98066\``);
+        await queryRunner.query(`ALTER TABLE \`message\` DROP FOREIGN KEY \`FK_7cf4a4df1f2627f72bf6231635f\``);
+        await queryRunner.query(`ALTER TABLE \`contact_custom_property\` DROP FOREIGN KEY \`FK_22b727b2dceec555b39464d5e00\``);
+        await queryRunner.query(`ALTER TABLE \`contact_custom_property\` DROP FOREIGN KEY \`FK_a95fa7cfe418a7d94b3343acce7\``);
+        await queryRunner.query(`ALTER TABLE \`invitation\` DROP FOREIGN KEY \`FK_603764233ba5c97400836665523\``);
+        await queryRunner.query(`ALTER TABLE \`notification\` DROP FOREIGN KEY \`FK_1ced25315eb974b73391fb1c81b\``);
+        await queryRunner.query(`DROP INDEX \`IDX_77e0650e92bd7eb4fece84f8c3\` ON \`list_contacts_contact\``);
+        await queryRunner.query(`DROP INDEX \`IDX_e03327665f584bf0327f41d81d\` ON \`list_contacts_contact\``);
+        await queryRunner.query(`DROP TABLE \`list_contacts_contact\``);
+        await queryRunner.query(`DROP TABLE \`business\``);
+        await queryRunner.query(`DROP TABLE \`call_log\``);
+        await queryRunner.query(`DROP TABLE \`folder\``);
+        await queryRunner.query(`DROP TABLE \`list\``);
+        await queryRunner.query(`DROP TABLE \`group\``);
+        await queryRunner.query(`DROP TABLE \`message_log\``);
+        await queryRunner.query(`DROP TABLE \`notification_save\``);
+        await queryRunner.query(`DROP INDEX \`IDX_91af1a4e5e9738afc28db3f486\` ON \`short_url\``);
+        await queryRunner.query(`DROP TABLE \`short_url\``);
+        await queryRunner.query(`DROP INDEX \`IDX_78a916df40e02a9deb1c4b75ed\` ON \`user\``);
+        await queryRunner.query(`DROP INDEX \`IDX_e12875dfb3b1d92d7d7c5377e2\` ON \`user\``);
+        await queryRunner.query(`DROP TABLE \`user\``);
+        await queryRunner.query(`DROP TABLE \`simple_campaign\``);
+        await queryRunner.query(`DROP TABLE \`campaign_message\``);
+        await queryRunner.query(`DROP TABLE \`automated_campaign\``);
+        await queryRunner.query(`DROP TABLE \`permission\``);
+        await queryRunner.query(`DROP TABLE \`role\``);
+        await queryRunner.query(`DROP TABLE \`team_member\``);
+        await queryRunner.query(`DROP TABLE \`team\``);
+        await queryRunner.query(`DROP TABLE \`contact\``);
+        await queryRunner.query(`DROP TABLE \`task\``);
+        await queryRunner.query(`DROP TABLE \`conversation\``);
+        await queryRunner.query(`DROP TABLE \`sms_reply\``);
+        await queryRunner.query(`DROP TABLE \`call\``);
+        await queryRunner.query(`DROP TABLE \`message\``);
+        await queryRunner.query(`DROP TABLE \`contact_custom_property\``);
+        await queryRunner.query(`DROP TABLE \`custom_property_definition\``);
+        await queryRunner.query(`DROP INDEX \`IDX_bcb0a0d2333443083582a05cdd\` ON \`invitation\``);
+        await queryRunner.query(`DROP TABLE \`invitation\``);
+        await queryRunner.query(`DROP TABLE \`notification\``);
+    }
+
+}

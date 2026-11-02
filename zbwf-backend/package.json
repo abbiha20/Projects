@@ -1,0 +1,39 @@
+{
+  "name": "todoreduxbackend",
+  "version": "1.0.0",
+  "description": "todo Reux Backend (learning)",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "author": "Huzaifa",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "@react-pdf/pdfkit": "^4.0.3",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "https": "^1.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.2",
+    "mysql2": "^3.10.2",
+    "nodemailer": "^7.0.2",
+    "pdfkit": "^0.17.1",
+    "puppeteer": "^24.8.2",
+    "sequelize": "^6.37.3",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Management System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script src="https://sdk.twilio.com/js/client/releases/1.14.0/twilio.js"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .call-controls, .call-history {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+        .recording-controls {
+            margin-top: 10px;
+        }
+        .call-log {
+            margin-top: 20px;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .active {
+            background-color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .call-history-list {
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .call-history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .call-history-item:hover {
+            background-color: #f5f5f5;
+        }
+        .audio-controls {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .pagination button {
+            padding: 5px 10px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Call Management System</h1>
+        
+        <div class="grid-container">
+            <div class="call-controls">
+                <h2>Make a Call</h2>
+                <input type="text" id="phoneNumber" placeholder="Enter phone number" />
+                <button id="makeCallBtn">Make Call</button>
+                <button id="endCallBtn" disabled>End Call</button>
+                
+                <div class="recording-controls">
+                    <label>
+                        <input type="checkbox" id="enableRecording" />
+                        Enable Recording
+                    </label>
+                </div>
+                
+                <div class="status" id="callStatus">Status: Idle</div>
+                
+                <div class="audio-controls">
+                    <h3>Audio Controls</h3>
+                    <button id="muteBtn">Mute</button>
+                    <button id="speakerBtn">Speaker</button>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" />
+                </div>
+                
+                <div class="call-log" id="callLog"></div>
+            </div>
+
+            <div class="call-history">
+                <h2>Call History</h2>
+                <div class="filters">
+                    <select id="directionFilter">
+                        <option value="outbound">Outbound</option>
+                        <option value="inbound">Inbound</option>
+                    </select>
+                    <input type="text" id="contactFilter" placeholder="Search contact" />
+                </div>
+                <div class="call-history-list" id="callHistoryList"></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CallManager {
+            constructor() {
+                this.socket = io('http://localhost:3000/calls');
+                this.device = null;
+                this.currentConnection = null;
+                this.isCallActive = false;
+                this.currentPage = 1;
+                this.setupSocketListeners();
+                this.setupUIElements();
+                this.initializeTwilio();
+                this.loadCallHistory();
+            }
+
+            setupUIElements() {
+                this.phoneNumberInput = document.getElementById('phoneNumber');
+                this.makeCallBtn = document.getElementById('makeCallBtn');
+                this.endCallBtn = document.getElementById('endCallBtn');
+                this.enableRecordingCheckbox =
+                    document.getElementById('enableRecording');
+                this.callStatusDiv = document.getElementById('callStatus');
+                this.callLogDiv = document.getElementById('callLog');
+
+                this.makeCallBtn.addEventListener('click', () => this.makeCall());
+                this.endCallBtn.addEventListener('click', () => this.endCall());
+
+                // Add new UI elements
+                this.muteBtn = document.getElementById('muteBtn');
+                this.speakerBtn = document.getElementById('speakerBtn');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.directionFilter = document.getElementById('directionFilter');
+                this.contactFilter = document.getElementById('contactFilter');
+
+                // Add new event listeners
+                this.muteBtn.addEventListener('click', () => this.toggleMute());
+                this.speakerBtn.addEventListener('click', () => this.toggleSpeaker());
+                this.volumeSlider.addEventListener('input', (e) => this.adjustVolume(e.target.value));
+                this.directionFilter.addEventListener('change', () => this.loadCallHistory());
+                this.contactFilter.addEventListener('input', () => this.loadCallHistory());
+            }
+
+            setupSocketListeners() {
+                this.socket.on('connect', () => {
+                    this.log('Socket connected');
+                });
+
+                this.socket.on('callStatus', (data) => {
+                    this.updateCallStatus(data);
+                });
+
+                this.socket.on('recordingStatus', (data) => {
+                    this.updateRecordingStatus(data);
+                });
+
+                this.socket.on('error', (error) => {
+                    this.handleError(error);
+                });
+            }
+
+            async initializeTwilio() {
+                try {
+                    // Fetch Twilio token from your backend
+                    const response = await fetch(
+                        'http://localhost:3000/api/call/token',
+                        {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization:
+                                    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluMkBnbWFpbC5jb20iLCJzdWIiOiI1N2Y2NGViNC00NWVmLTRhYjItYjQ3NC1jMTNmNDk0NzQzYjQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Mjk2ODgwNzUsImV4cCI6MTczMDU1MjA3NX0.BxGcNXrFDyp6myftuFL1C0hoYUTzeE_A31qPDfde_HU',
+                            },
+                        },
+                    );
+                    const data = await response.json();
+
+                    this.device = new Twilio.Device(data.token, {
+                        debug: true,
+                    });
+
+                    this.device.on('ready', () => {
+                        this.log('Twilio device is ready');
+                    });
+
+                    this.device.on('error', (error) => {
+                        this.handleError(error);
+                    });
+
+                    this.device.on('incoming', (connection) => {
+                        this.handleIncomingCall(connection);
+                    });
+                } catch (error) {
+                    this.handleError('Failed to initialize Twilio: ' + error.message);
+                }
+            }
+
+            async makeCall() {
+                try {
+                    const phoneNumber = this.phoneNumberInput.value.trim();
+                    if (!phoneNumber) {
+                        throw new Error('Please enter a phone number');
+                    }
+
+                    const response = await fetch(
+                        'http://localhost:3000/api/call/direct-call',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization:
+                                    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluMkBnbWFpbC5jb20iLCJzdWIiOiI1N2Y2NGViNC00NWVmLTRhYjItYjQ3NC1jMTNmNDk0NzQzYjQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Mjk2ODgwNzUsImV4cCI6MTczMDU1MjA3NX0.BxGcNXrFDyp6myftuFL1C0hoYUTzeE_A31qPDfde_HU',
+                            },
+                            body: JSON.stringify({
+                                phoneNumber: phoneNumber,
+                                enableRecording: this.enableRecordingCheckbox.checked,
+                            }),
+                        },
+                    );
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to initiate call');
+                    }
+
+                    this.isCallActive = true;
+                    this.makeCallBtn.disabled = true;
+                    this.endCallBtn.disabled = false;
+                    this.updateCallStatus({ status: 'initiated' });
+                } catch (error) {
+                    this.handleError(error);
+                }
+            }
+
+            async endCall() {
+                if (this.currentConnection) {
+                    try {
+                        await fetch('http://localhost:3000/api/call/end-call', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: 'Bearer ' + this.getToken()
+                            },
+                            body: JSON.stringify({ callSid: this.currentConnection.parameters.CallSid })
+                        });
+                        this.currentConnection.disconnect();
+                        this.resetCallUI();
+                    } catch (error) {
+                        this.handleError('Failed to end call: ' + error.message);
+                    }
+                }
+            }
+
+            handleIncomingCall(connection) {
+                this.log('Incoming call from: ' + connection.parameters.From);
+
+                this.currentConnection = connection;
+                this.isCallActive = true;
+                this.makeCallBtn.disabled = true;
+                this.endCallBtn.disabled = false;
+
+                connection.accept();
+            }
+
+            updateCallStatus(data) {
+                this.callStatusDiv.textContent = `Status: ${data.status}`;
+                this.log(`Call status updated: ${data.status}`);
+
+                if (data.status === 'completed' || data.status === 'failed') {
+                    this.resetCallUI();
+                }
+            }
+
+            updateRecordingStatus(data) {
+                this.log(`Recording status: ${data.recordingStatus}`);
+                if (data.recordingUrl) {
+                    this.log(`Recording URL: ${data.recordingUrl}`);
+                }
+            }
+
+            resetCallUI() {
+                this.isCallActive = false;
+                this.makeCallBtn.disabled = false;
+                this.endCallBtn.disabled = true;
+                this.currentConnection = null;
+                this.updateCallStatus({ status: 'idle' });
+            }
+
+            handleError(error) {
+                const errorMessage = error.message || error;
+                this.log(`Error: ${errorMessage}`, true);
+                console.error(error);
+            }
+
+            log(message, isError = false) {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+                if (isError) {
+                    logEntry.classList.add('error');
+                }
+                this.callLogDiv.insertBefore(logEntry, this.callLogDiv.firstChild);
+            }
+
+            async loadCallHistory() {
+                try {
+                    const response = await fetch(
+                        `http://localhost:3000/api/call/all?direction=${this.directionFilter.value}&page=${this.currentPage}&limit=10`,
+                        {
+                            headers: {
+                                Authorization:
+                                'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluMkBnbWFpbC5jb20iLCJzdWIiOiI1N2Y2NGViNC00NWVmLTRhYjItYjQ3NC1jMTNmNDk0NzQzYjQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Mjk2ODgwNzUsImV4cCI6MTczMDU1MjA3NX0.BxGcNXrFDyp6myftuFL1C0hoYUTzeE_A31qPDfde_HU',
+                            }
+                        }
+                    );
+                    const data = await response.json();
+                    this.renderCallHistory(data);
+                } catch (error) {
+                    this.handleError('Failed to load call history: ' + error.message);
+                }
+            }
+
+            renderCallHistory(data) {
+                const historyList = document.getElementById('callHistoryList');
+                historyList.innerHTML = '';
+
+                data.data.forEach(call => {
+                    const callItem = document.createElement('div');
+                    callItem.className = 'call-history-item';
+                    callItem.innerHTML = `
+                        <div>
+                            <strong>${call.contact ? call.contact.name : call.phoneNumber}</strong>
+                            <div>Status: ${call.status}</div>
+                            <div>Duration: ${call.duration || 0}s</div>
+                            <div>${new Date(call.callTime).toLocaleString()}</div>
+                        </div>
+                        <div>
+                            ${call.recordingUrl ? `<button onclick="window.open('${call.recordingUrl}')">Play Recording</button>` : ''}
+                        </div>
+                    `;
+                    historyList.appendChild(callItem);
+                });
+
+                this.renderPagination(data.meta);
+            }
+
+            renderPagination(meta) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                if (meta.totalPages > 1) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.textContent = 'Previous';
+                    prevBtn.disabled = meta.page === 1;
+                    prevBtn.onclick = () => {
+                        this.currentPage--;
+                        this.loadCallHistory();
+                    };
+
+                    const nextBtn = document.createElement('button');
+                    nextBtn.textContent = 'Next';
+                    nextBtn.disabled = meta.page === meta.totalPages;
+                    nextBtn.onclick = () => {
+                        this.currentPage++;
+                        this.loadCallHistory();
+                    };
+
+                    pagination.appendChild(prevBtn);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            async getCallStatus(callSid) {
+                try {
+                    const response = await fetch('http://localhost:3000/api/call/status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization:
+                            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluMkBnbWFpbC5jb20iLCJzdWIiOiI1N2Y2NGViNC00NWVmLTRhYjItYjQ3NC1jMTNmNDk0NzQzYjQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Mjk2ODgwNzUsImV4cCI6MTczMDU1MjA3NX0.BxGcNXrFDyp6myftuFL1C0hoYUTzeE_A31qPDfde_HU',
+                        },
+                        body: JSON.stringify({ callSid })
+                    });
+                    return await response.json();
+                } catch (error) {
+                    this.handleError('Failed to get call status: ' + error.message);
+                }
+            }
+
+            toggleMute() {
+                if (this.currentConnection) {
+                    const isMuted = this.currentConnection.isMuted();
+                    this.currentConnection.mute(!isMuted);
+                    this.muteBtn.classList.toggle('active', !isMuted);
+                }
+            }
+
+            toggleSpeaker() {
+                // Implementation depends on browser APIs
+                this.speakerBtn.classList.toggle('active');
+            }
+
+            adjustVolume(value) {
+                if (this.currentConnection) {
+                    this.currentConnection.volume(value / 100);
+                }
+            }
+
+            getToken() {
+                return 'your-auth-token'; 
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.callManager = new CallManager();
+        });
+    </script>
+</body>
+</html>

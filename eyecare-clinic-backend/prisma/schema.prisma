@@ -1,0 +1,297 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(uuid())
+  username      String
+  password      String
+  emailAddress  String          @unique
+  patient       Patient[]
+  optician      Optician[]
+  doctor        Doctor[]
+  admin         Admin[]
+  Notifications Notifications[]
+  Logs          Logs[]
+}
+
+model Admin {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  chats  Chat[]
+}
+
+model Payment {
+  id              String    @id @default(uuid())
+  date            DateTime
+  paidAmount      String
+  patientId       String
+  doctorId        String?
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  doctor          Doctor?   @relation(fields: [doctorId], references: [id])
+  opticianId      String?
+  optician        Optician? @relation(fields: [opticianId], references: [id])
+  appointmentDate DateTime
+}
+
+model Patient {
+  id             String           @id @default(uuid())
+  gender         String
+  dob            DateTime
+  picture        String?
+  appointments   Appointment[]
+  chats          Chat[]
+  visionTest     VisionTest[] // Adding a reference to the EyeTest model
+  colorBlindTest ColorBlindTest[]
+  ratinaScan     RatinaScan[]
+  userId         String
+  user           User             @relation(fields: [userId], references: [id])
+  DoctorRating   DoctorRating[]
+  Notifications  Notifications[]
+  OpticianRating OpticianRating[]
+  Payment        Payment[]
+}
+
+model Optician {
+  id                  String                @id @default(uuid())
+  businessLocation    String
+  picture             String?
+  chats               Chat[]
+  services            String
+  latitude            Float
+  longitude           Float
+  examinationFee      Float
+  userId              String
+  user                User                  @relation(fields: [userId], references: [id])
+  paymentMethodId     String?
+  paymentMethod       PaymentMethod?        @relation(fields: [paymentMethodId], references: [id])
+  appointments        Appointment[]
+  ColorBlindTestShare ColorBlindTestShare[]
+  RatinaScanShare     RatinaScanShare[]
+  VisionTestShare     VisionTestShare[]
+  Notifications       Notifications[]
+  OpticianRating      OpticianRating[]
+  Payment             Payment[]
+}
+
+// Doctor model
+model Doctor {
+  id                   String                @id @default(uuid())
+  gender               String
+  category             String
+  department           String
+  yearOfExperience     Int
+  speciality           String
+  examinationFee       Float
+  consultationSchedule String
+  consultationHours    String
+  hospitalAddress      String
+  contactNo            String
+  latitude             Float
+  longitude            Float
+  picture              String?
+  appointments         Appointment[]
+  chats                Chat[]
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  paymentMethodId      String?
+  paymentMethod        PaymentMethod?        @relation(fields: [paymentMethodId], references: [id])
+  ColorBlindTestShare  ColorBlindTestShare[]
+  RatinaScanShare      RatinaScanShare[]
+  VisionTestShare      VisionTestShare[]
+  DoctorRating         DoctorRating[]
+  Notifications        Notifications[]
+  Payment              Payment[]
+}
+
+model DoctorRating {
+  id        String   @id @default(uuid())
+  doctorId  String
+  patientId String
+  rating    Int
+  date      DateTime
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+}
+
+model OpticianRating {
+  id        String   @id @default(uuid())
+  opicianId String
+  patientId String
+  rating    Int
+  date      DateTime
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  optician  Optician @relation(fields: [opicianId], references: [id])
+}
+
+// Appointment model to represent appointments
+model Appointment {
+  id              String    @id @default(uuid())
+  patientId       String
+  doctorId        String?
+  appointmentTime DateTime
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  doctor          Doctor?   @relation(fields: [doctorId], references: [id])
+  opticianId      String?
+  optician        Optician? @relation(fields: [opticianId], references: [id])
+}
+
+// Chat model to represent chat interactions
+model Message {
+  id              String    @id @default(uuid())
+  message         String
+  appointmentDate DateTime?
+  picture         String?
+  isAppoitment    Boolean   @default(false)
+  isRx            Boolean   @default(false)
+  chatId          String
+  sender          String
+  receiver        String
+  sentAt          DateTime  @default(now())
+  chat            Chat      @relation(fields: [chatId], references: [id])
+}
+
+// EyeTest model to represent different types of eye tests
+model VisionTest {
+  id                    String            @id @default(uuid())
+  patientId             String
+  ipd                   Int
+  rightVaUnaided        Int
+  rightVaAided          Int
+  leftVaUnaided         Int
+  leftVaAided           Int
+  nearVisionLeft        Int
+  nearVisionRight       Int
+  nearVisionBottomLeft  Int
+  nearVisionBottomRight Int
+  leftleftVisionField   Int
+  leftVisionField       Int
+  rightrightVisionField Int
+  rightField            Int
+  date                  DateTime
+  patient               Patient           @relation(fields: [patientId], references: [id])
+  VisionTestShare       VisionTestShare[]
+}
+
+model PaymentMethod {
+  id                String     @id @default(uuid())
+  paymentMethod     String
+  bankName          String
+  accountHolderName String
+  accountNumber     String
+  Optician          Optician[]
+  Doctor            Doctor[]
+}
+
+model ColorBlindTest {
+  id                  String                @id @default(uuid())
+  patientId           String
+  score               Int
+  date                DateTime // Date of the eye test
+  patient             Patient               @relation(fields: [patientId], references: [id])
+  ColorBlindTestShare ColorBlindTestShare[]
+}
+
+model ColorBlindTestShare {
+  id               String          @id @default(uuid())
+  patientId        String
+  date             DateTime
+  doctorId         String?
+  doctor           Doctor?         @relation(fields: [doctorId], references: [id])
+  opticianId       String?
+  optician         Optician?       @relation(fields: [opticianId], references: [id])
+  colorBlindTestId String
+  colorBlindTest   ColorBlindTest  @relation(fields: [colorBlindTestId], references: [id])
+  Notifications    Notifications[]
+}
+
+model RatinaScanShare {
+  id            String          @id @default(uuid())
+  patientId     String
+  date          DateTime
+  doctorId      String?
+  doctor        Doctor?         @relation(fields: [doctorId], references: [id])
+  opticianId    String?
+  optician      Optician?       @relation(fields: [opticianId], references: [id])
+  ratinaScanId  String
+  ratinaScan    RatinaScan      @relation(fields: [ratinaScanId], references: [id])
+  Notifications Notifications[]
+}
+
+model VisionTestShare {
+  id            String          @id @default(uuid())
+  patientId     String
+  date          DateTime
+  doctorId      String?
+  doctor        Doctor?         @relation(fields: [doctorId], references: [id])
+  opticianId    String?
+  optician      Optician?       @relation(fields: [opticianId], references: [id])
+  visionTestId  String
+  visionTest    VisionTest      @relation(fields: [visionTestId], references: [id])
+  Notifications Notifications[]
+}
+
+model RatinaScan {
+  id              String            @id @default(uuid())
+  patientId       String
+  leftEye         String
+  rightEye        String
+  date            DateTime
+  patient         Patient           @relation(fields: [patientId], references: [id])
+  RatinaScanShare RatinaScanShare[]
+}
+
+// Logs model
+model Logs {
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  action String
+  date   DateTime
+}
+
+model Notifications {
+  id                    String               @id @default(uuid())
+  patientId             String?
+  doctorId              String?
+  seen                  Boolean              @default(false)
+  prescription          Boolean              @default(false)
+  appointment           Boolean              @default(false)
+  date                  DateTime
+  patient               Patient?             @relation(fields: [patientId], references: [id])
+  doctor                Doctor?              @relation(fields: [doctorId], references: [id])
+  optician              Optician?            @relation(fields: [opticianId], references: [id])
+  opticianId            String?
+  chatId                String?
+  chat                  Chat?                @relation(fields: [chatId], references: [id])
+  colorBlindTestShareId String?
+  colorBlindTestShare   ColorBlindTestShare? @relation(fields: [colorBlindTestShareId], references: [id])
+  ratinaScanShareId     String?
+  ratinaScanShare       RatinaScanShare?     @relation(fields: [ratinaScanShareId], references: [id])
+  visionTestShareId     String?
+  visionTestShare       VisionTestShare?     @relation(fields: [visionTestShareId], references: [id])
+  User                  User?                @relation(fields: [userId], references: [id])
+  userId                String?
+}
+
+model Chat {
+  id           String          @id @default(uuid())
+  patientId    String?
+  doctorId     String?
+  patient      Patient?        @relation(fields: [patientId], references: [id])
+  doctor       Doctor?         @relation(fields: [doctorId], references: [id])
+  admin        Admin?          @relation(fields: [adminId], references: [id])
+  adminId      String?
+  optician     Optician?       @relation(fields: [opticianId], references: [id])
+  opticianId   String?
+  isAccepted   Boolean         @default(false)
+  message      Message[]
+  notification Notifications[] // New field to relate to Notifications
+}
